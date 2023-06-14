@@ -261,8 +261,7 @@ wss.on('connection', (ws: WebSocket) => {
     ws.send(JSON.stringify(lobbiesResponse));
 
     console.log(lobby, 'lobby')
-    console.log(games, 'games')
-    // console.log(users, 'users')
+    console.log(users, 'users')  
 });
 
 // start our server
