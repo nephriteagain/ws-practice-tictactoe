@@ -260,8 +260,14 @@ wss.on('connection', (ws: WebSocket) => {
     const lobbiesResponse = { type: 'lobby', payload: lobbyObj };
     ws.send(JSON.stringify(lobbiesResponse));
 
-    console.log(lobby, 'lobby')
-    console.log(users, 'users')  
+    let userCount = 0
+    console.log('users')
+    for (let [key] of users) {
+      console.log(key)
+      userCount++
+    }
+    console.log(`total users: ${userCount}`)
+    // 
 });
 
 // start our server
