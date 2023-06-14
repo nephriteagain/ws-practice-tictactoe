@@ -70,14 +70,15 @@ const users = new Map()
 type message = Record<string,any>
 
 wss.on('connection', (ws: WebSocket) => {
-  
   const clientId = generateClientId()
   users.set(clientId, ws)
+
 
   ws.on('message', (message: string) => {
     
     const payload : message = JSON.parse(message)
-    console.log(payload)
+    console.log(payload.type)
+  
     if (payload.type === 'create') {
       const id = payload.id      
       lobby.set(id, {host:id, guest: ''})
@@ -231,6 +232,7 @@ wss.on('connection', (ws: WebSocket) => {
 
     }
    
+    // when user click the leave button on the client
     if (payload.type === 'quit') {
       const { gameId, players } = payload
       games.delete(gameId)
@@ -245,9 +247,44 @@ wss.on('connection', (ws: WebSocket) => {
       })
     }
 
+    // when user closed the tab 
+    if (payload.type === 'disconnect') {
+      const { id, host, guest } = payload
+      if (host||guest) {
+        games.delete(host)
+      }
+      const hostWs = users.get(host)
+      const guestWs = users.get(guest)
+      
+      wss.clients.forEach(client => {
+        if (client === hostWs || client === guestWs) {
+          const gameResponse = { type: 'disconnect', payload: {message: 'a player has disconnected'}}
+          client.send(JSON.stringify(gameResponse))
+        }
+      })
+      users.delete(id)
+      let total = 0
+      for (let item in users) {
+        total++
+      }
+      console.log(`Total users: ${total}`)
+    }
+
 
   });  
 
+  
+  ws.on('close', (code, reason) => {
+    console.log(code, reason)
+    let userCount = 0
+    for (let [key,value] of users) {
+      userCount++
+      if (value == ws) {
+        users.delete(key)        
+      }
+    }
+    console.log(`total User: ${userCount}`)
+  })
 
     // initial response
     const connectResponse = { type: 'connect', payload: { clientId } };
@@ -260,10 +297,10 @@ wss.on('connection', (ws: WebSocket) => {
     const lobbiesResponse = { type: 'lobby', payload: lobbyObj };
     ws.send(JSON.stringify(lobbiesResponse));
 
+    // 
     let userCount = 0
-    console.log('users')
     for (let [key] of users) {
-      console.log(key)
+      // console.log(key)
       userCount++
     }
     console.log(`total users: ${userCount}`)
